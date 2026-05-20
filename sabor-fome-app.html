@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sabor Fome – Protótipo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; }
+
+    /* ── PHONE FRAME ── */
+    .phone-frame { width: 390px; height: 844px; background: #0a0a0a; border-radius: 50px; border: 6px solid #2a2a2a; box-shadow: 0 0 0 1px #333, 0 30px 80px rgba(0,0,0,0.9); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+    .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 30px; background: #2a2a2a; border-radius: 0 0 20px 20px; z-index: 100; }
+    .status-bar { display: flex; justify-content: space-between; padding: 14px 28px 6px; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; position: relative; z-index: 10; }
+    .screens { flex: 1; position: relative; overflow: hidden; }
+    .screen { position: absolute; inset: 0; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden; background: #0a0a0a; scrollbar-width: none; }
+    .screen::-webkit-scrollbar { display: none; }
+    .screen.active { display: flex; }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav { display: flex; justify-content: space-around; align-items: center; padding: 10px 0 18px; background: #0f0f0f; border-top: 1px solid #1a1a1a; flex-shrink: 0; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 14px; border-radius: 10px; transition: background 0.2s; }
+    .nav-item:hover { background: #151515; }
+    .nav-item.active .nav-icon { color: #00C853; }
+    .nav-item.active .nav-label { color: #00C853; }
+    .nav-icon { font-size: 20px; color: #444; }
+    .nav-label { font-size: 10px; color: #444; font-weight: 500; }
+
+    /* ── COMMON ── */
+    .top-bar { display: flex; align-items: center; gap: 12px; padding: 16px 20px 12px; flex-shrink: 0; }
+    .back-btn { width: 34px; height: 34px; background: #161616; border: 1px solid #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: #00C853; flex-shrink: 0; }
+    .screen-title { font-size: 20px; font-weight: 700; color: #fff; }
+    .btn-primary { background: #00C853; color: #000; border: none; border-radius: 14px; padding: 15px; font-size: 15px; font-weight: 800; cursor: pointer; width: 100%; letter-spacing: 0.3px; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: transparent; color: #00C853; border: 1.5px solid #00C853; border-radius: 14px; padding: 13px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
+    .btn-sm { background: #00C853; color: #000; border: none; border-radius: 10px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .input-field { width: 100%; background: #131313; border: 1.5px solid #222; border-radius: 12px; padding: 14px 16px; color: #666; font-size: 14px; font-family: 'Segoe UI', Arial, sans-serif; }
+    .section-title { font-size: 16px; font-weight: 700; color: #fff; padding: 16px 20px 8px; flex-shrink: 0; }
+    .tag-green { background: rgba(0,200,83,0.12); color: #00C853; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+    .divider { width: 100%; height: 1px; background: #1a1a1a; margin: 4px 0; }
+    .tiny { font-size: 11px; color: #333; margin-top: 4px; }
+    .tiny span { color: #00C853; }
+
+    /* ── TELA 1 LOGIN ── */
+    .login-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 28px 24px; gap: 14px; }
+    .logo-box { width: 76px; height: 76px; background: linear-gradient(135deg, #00C853, #00952F); border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: 0 8px 24px rgba(0,200,83,0.3); margin-bottom: 4px; }
+    .app-name { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+    .app-sub { font-size: 14px; color: #555; margin-top: -6px; }
+
+    /* ── TELA 2 LOCALIZAÇÃO ── */
+    .map-area { margin: 0 20px; height: 280px; background: #0f1f0f; border-radius: 20px; border: 1px solid #1a2a1a; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; flex-shrink: 0; }
+    .map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,200,83,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,200,83,0.05) 1px, transparent 1px); background-size: 30px 30px; }
+    .map-pin { font-size: 40px; position: relative; z-index: 2; filter: drop-shadow(0 4px 12px rgba(255,60,60,0.5)); animation: bounce 1.5s infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    .loc-buttons { display: flex; flex-direction: column; gap: 10px; padding: 12px 20px 24px; flex-shrink: 0; }
+
+    /* ── TELA 3 OCASIÃO ── */
+    .occasion-body { flex: 1; display: flex; flex-direction: column; padding: 0 20px 24px; gap: 14px; overflow-y: auto; }
+    .occasion-intro { font-size: 13px; color: #666; padding: 4px 0 8px; line-height: 1.6; }
+    .occasion-card {
+      background: #0f0f0f;
+      border: 2px solid #1a1a1a;
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      flex-shrink: 0;
+    }
+    .occasion-card:hover { border-color: #00C853; background: rgba(0,200,83,0.04); }
+    .occasion-card.selected { border-color: #00C853; background: rgba(0,200,83,0.08); }
+    .occasion-emoji { font-size: 38px; flex-shrink: 0; }
+    .occasion-info { flex: 1; }
+    .occasion-name { font-size: 17px; font-weight: 800; color: #fff; }
+    .occasion-desc { font-size: 12px; color: #666; margin-top: 3px; line-height: 1.4; }
+    .occasion-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #333; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; }
+    .occasion-check.on { background: #00C853; border-color: #00C853; color: #000; }
+
+    /* ── TELA 4 HOME ── */
+    .home-header { padding: 16px 20px 8px; flex-shrink: 0; }
+    .home-greeting { font-size: 13px; color: #666; }
+    .home-name { font-size: 22px; font-weight: 800; color: #fff; }
+    .occasion-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.3); border-radius: 20px; padding: 5px 12px; margin-top: 8px; font-size: 12px; color: #00C853; font-weight: 600; cursor: pointer; }
+    .search-bar { margin: 10px 20px 14px; background: #131313; border: 1.5px solid #1e1e1e; border-radius: 14px; padding: 13px 16px; color: #555; font-size: 13px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .categories-scroll { display: flex; gap: 12px; padding: 0 20px 14px; overflow-x: auto; flex-shrink: 0; }
+    .categories-scroll::-webkit-scrollbar { display: none; }
+    .cat-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex-shrink: 0; }
+    .cat-circle { width: 56px; height: 56px; background: #111; border: 2px solid #1e1e1e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .cat-circle.active { border-color: #00C853; background: rgba(0,200,83,0.08); }
+    .cat-label { font-size: 11px; color: #666; }
+    .promo-banner { margin: 0 20px 14px; background: linear-gradient(135deg, #003d1a, #006b2d); border-radius: 18px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #00C853; flex-shrink: 0; }
+    .promo-tag { font-size: 11px; color: #00C853; font-weight: 600; margin-bottom: 4px; }
+    .promo-title { font-size: 17px; font-weight: 800; color: #fff; line-height: 1.2; }
+    .promo-sub { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .promo-emoji { font-size: 48px; }
+    .promo-list { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+    .promo-item { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; }
+    .promo-item-emoji { font-size: 30px; flex-shrink: 0; }
+    .promo-item-info { flex: 1; }
+    .promo-item-name { font-size: 14px; font-weight: 600; color: #fff; }
+    .promo-item-desc { font-size: 11px; color: #555; margin-top: 2px; }
+    .promo-item-price { font-size: 12px; font-weight: 700; color: #00C853; }
+
+    /* ── TELA 5 RESTAURANTES ── */
+    .rest-list { padding: 0 20px 24px; display: flex; flex-direction: column; gap: 12px; }
+    .rest-card { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 18px; overflow: hidden; }
+    .rest-cover { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; }
+    .rest-cover-mc { background: linear-gradient(135deg, #DA291C, #ff6b35); }
+    .rest-cover-bk { background: linear-gradient(135deg, #502314, #a0401a); }
+    .rest-cover-gf { background: linear-gradient(135deg, #F04E23, #f08020); }
+    .rest-cover-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); border-radius: 8px; padding: 3px 8px; font-size: 11px; color: #fff; }
+    .rest-body { padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+    .rest-logo-small { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 900; flex-shrink: 0; border: 2px solid #222; }
+    .rest-info-col { flex: 1; }
+    .rest-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .rest-stars { font-size: 11px; color: #FFD700; margin: 2px 0; }
+    .rest-meta { font-size: 11px; color: #555; }
+    .rest-badges { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+    .badge { font-size: 10px; background: #151515; border: 1px solid #222; border-radius: 6px; padding: 2px 7px; color: #888; }
+    .badge-green { border-color: rgba(0,200,83,0.3); color: #00C853; background: rgba(0,200,83,0.06); }
+    .score-chip { font-size: 10px; font-weight: 700; color: #00C853; background: rgba(0,200,83,0.1); border-radius: 6px; padding: 2px 7px; white-space: nowrap; }
+
+    /* ── TELA 6 FILTROS ── */
+    .filter-body { flex: 1; padding: 0 20px 24px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .filter-section-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: -8px; }
+    .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .filter-chip { background: #111; border: 1.5px solid #222; border-radius: 20px; padding: 8px 16px; font-size: 13px; color: #888; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .filter-chip.active { background: #00C853; border-color: #00C853; color: #000; }
+    .filter-chip:hover { border-color: #00C853; color: #00C853; }
+    .access-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .access-card { background: #0f0f0f; border: 1.5px solid #1a1a1a; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: border-color 0.2s; }
+    .access-card.active { border-color: #00C853; background: rgba(0,200,83,0.06); }
+    .access-card:hover { border-color: #00C853; }
+    .access-icon { font-size: 22px; }
+    .access-label { font-size: 12px; font-weight: 700; color: #ddd; }
+    .access-sub { font-size: 10px; color: #555; margin-top: 1px; }
+    .price-row { display: flex; gap: 8px; }
+    .price-btn { flex: 1; background: #111; border: 1.5px solid #222; border-radius: 12px; padding: 12px; text-align: center; font-size: 14px; font-weight: 700; color: #888; cursor: pointer; transition: all 0.2s; }
+    .price-btn.active { background: #00C853; border-color: #00C853; color: #000; }
+    .dist-row { display: flex; align-items: center; gap: 12px; }
+    .dist-slider { flex: 1; accent-color: #00C853; }
+    .dist-val { font-size: 13px; font-weight: 700; color: #00C853; width: 40px; text-align: right; }
+
+    /* ── TELA 7 PERFIL RESTAURANTE ── */
+    .rest-header { background: linear-gradient(180deg, #003d1a 0%, #0a0a0a 100%); padding: 20px 20px 14px; flex-shrink: 0; }
+    .rest-header-logo { width: 64px; height: 64px; background: #fff; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 10px; border: 2px solid #00C853; }
+    .rest-header-name { font-size: 22px; font-weight: 800; color: #fff; }
+    .rest-header-stars { color: #FFD700; font-size: 13px; margin-top: 4px; }
+    .rest-header-meta { font-size: 12px; color: #888; margin-top: 4px; }
+    .rest-header-badges { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+    .video-player {
+      margin: 12px 20px;
+      height: 160px;
+      background: linear-gradient(135deg, #001a0a, #003d1a);
+      border-radius: 18px;
+      border: 1px solid #00C853;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .video-play-btn { width: 56px; height: 56px; background: rgba(0,200,83,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 0 24px rgba(0,200,83,0.4); }
+    .video-label { font-size: 13px; color: #aaa; font-weight: 500; }
+    .video-tag { position: absolute; top: 12px; left: 12px; background: rgba(0,200,83,0.9); color: #000; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; }
+    .video-pov { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 6px; }
+
+    .info-row { margin: 0 20px 10px; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 14px; padding: 14px; flex-shrink: 0; }
+    .info-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+    .info-item + .info-item { border-top: 1px solid #151515; }
+    .info-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+    .info-text { font-size: 13px; color: #ccc; }
+    .info-sub { font-size: 11px; color: #555; }
+
+    .action-row { display: flex; gap: 10px; margin: 0 20px 10px; flex-shrink: 0; }
+    .action-btn { flex: 1; background: #111; border: 1.5px solid #222; border-radius: 14px; padding: 13px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+    .action-btn:hover { border-color: #00C853; }
+    .action-btn-icon { font-size: 22px; }
+    .action-btn-label { font-size: 11px; color: #888; font-weight: 600; }
+
+    .cat-tabs { display: flex; gap: 8px; padding: 10px 20px; overflow-x: auto; flex-shrink: 0; }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab { background: #111; border: 1.5px solid #222; border-radius: 20px; padding: 7px 16px; font-size: 13px; color: #888; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .cat-tab.active { background: #00C853; border-color: #00C853; color: #000; }
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 20px 24px; }
+    .menu-card { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 16px; overflow: hidden; }
+    .menu-card-img { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 40px; background: #151515; }
+    .menu-card-body { padding: 10px; }
+    .menu-card-name { font-size: 13px; font-weight: 700; color: #fff; }
+    .menu-card-price { font-size: 14px; font-weight: 800; color: #00C853; margin: 4px 0; }
+    .menu-card-btn { width: 100%; background: #00C853; color: #000; border: none; border-radius: 8px; padding: 7px; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+    /* ── TELA 8 CONFIRMAR VISITA ── */
+    .visit-body { flex: 1; display: flex; flex-direction: column; padding: 0 20px 24px; gap: 14px; overflow-y: auto; }
+    .visit-rest-card { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 16px; padding: 16px; display: flex; gap: 14px; align-items: center; }
+    .visit-rest-logo { width: 52px; height: 52px; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .visit-rest-name { font-size: 16px; font-weight: 700; color: #fff; }
+    .visit-rest-meta { font-size: 12px; color: #555; margin-top: 3px; }
+    .visit-rest-occasion { font-size: 12px; color: #00C853; font-weight: 600; margin-top: 4px; }
+    .visit-field { background: #0f0f0f; border: 1.5px solid #1a1a1a; border-radius: 14px; padding: 16px; }
+    .visit-field-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 700; }
+    .visit-field-value { font-size: 15px; color: #fff; font-weight: 600; }
+    .people-row { display: flex; align-items: center; gap: 16px; }
+    .people-btn { width: 36px; height: 36px; background: #1a1a1a; border: 1.5px solid #00C853; border-radius: 10px; color: #00C853; font-size: 20px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .people-count { font-size: 22px; font-weight: 800; color: #fff; min-width: 30px; text-align: center; }
+    .visit-note { font-size: 11px; color: #444; line-height: 1.6; text-align: center; }
+
+    /* ── TELA 9 PONTOS ── */
+    .points-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 24px; gap: 16px; }
+    .trophy { font-size: 70px; animation: pop 0.5s ease; }
+    @keyframes pop { 0% { transform: scale(0.5); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .points-title { font-size: 26px; font-weight: 900; color: #fff; text-align: center; }
+    .points-value { font-size: 48px; font-weight: 900; color: #00C853; line-height: 1; }
+    .points-label { font-size: 14px; color: #555; margin-top: -8px; }
+    .points-bar-wrap { width: 100%; background: #111; border-radius: 10px; overflow: hidden; border: 1px solid #1a1a1a; }
+    .points-bar-inner { width: 65%; height: 10px; background: linear-gradient(90deg, #00C853, #00ff7f); border-radius: 10px; }
+    .points-bar-label { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #555; }
+    .points-card { width: 100%; background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 14px; }
+    .points-card-icon { font-size: 28px; }
+    .points-card-text { font-size: 13px; color: #aaa; line-height: 1.5; }
+    .points-card-text strong { color: #fff; }
+
+    /* ── TELA 10 AVALIAÇÃO ── */
+    .review-body { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 20px 24px 28px; gap: 16px; overflow-y: auto; }
+    .success-circle { width: 80px; height: 80px; background: linear-gradient(135deg, #00C853, #00952F); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: 0 0 40px rgba(0,200,83,0.3); }
+    .review-title { font-size: 20px; font-weight: 800; color: #fff; text-align: center; }
+    .review-sub { font-size: 13px; color: #555; text-align: center; margin-top: -8px; }
+    .stars-row { display: flex; gap: 8px; }
+    .star { font-size: 34px; cursor: pointer; filter: grayscale(1) brightness(0.3); transition: filter 0.2s; }
+    .star.lit { filter: none; }
+    .comment-box { width: 100%; background: #0f0f0f; border: 1.5px solid #1e1e1e; border-radius: 14px; padding: 14px; color: #555; font-size: 13px; font-family: 'Segoe UI', Arial, sans-serif; resize: none; height: 80px; }
+    .comment-box:focus { outline: none; border-color: #00C853; }
+    .photo-btn { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px dashed #333; border-radius: 12px; padding: 12px 16px; color: #555; font-size: 13px; cursor: pointer; width: 100%; justify-content: center; }
+    .photo-btn:hover { border-color: #00C853; color: #00C853; }
+    .review-points { display: flex; align-items: center; gap: 8px; background: rgba(0,200,83,0.08); border: 1px solid rgba(0,200,83,0.2); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: #00C853; font-weight: 600; }
+
+    /* ── TELA 11 LISTA PRATOS ── */
+    .dish-list { padding: 0 20px 24px; display: flex; flex-direction: column; }
+    .dish-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid #141414; align-items: flex-start; }
+    .dish-thumb { width: 80px; height: 80px; border-radius: 14px; background: #151515; display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0; border: 1px solid #222; }
+    .dish-content { flex: 1; }
+    .dish-name { font-size: 15px; font-weight: 700; color: #fff; }
+    .dish-price { font-size: 16px; font-weight: 800; color: #00C853; margin: 4px 0; }
+    .dish-desc { font-size: 11px; color: #555; line-height: 1.5; }
+    .dish-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .dish-add { width: 32px; height: 32px; background: #00C853; border: none; border-radius: 10px; color: #000; font-size: 20px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px; }
+
+    /* ── RESERVA & QR CODE ── */
+    .reserve-toggle-row { display: flex; gap: 8px; margin-top: 6px; }
+    .reserve-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #222; background: #111; color: #666; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .reserve-btn.active { border-color: #00C853; background: rgba(0,200,83,0.1); color: #00C853; }
+
+    /* ── TELA 9 – ESCOLHA PAGAMENTO ── */
+    .pay-choice-card { background: #0f0f0f; border: 2px solid #1a1a1a; border-radius: 18px; padding: 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s; }
+    .pay-choice-card:hover { border-color: #00C853; }
+    .pay-choice-card.selected { border-color: #00C853; background: rgba(0,200,83,0.06); }
+    .pay-choice-icon { font-size: 34px; flex-shrink: 0; }
+    .pay-choice-title { font-size: 15px; font-weight: 700; color: #fff; }
+    .pay-choice-desc { font-size: 12px; color: #666; margin-top: 3px; line-height: 1.4; }
+
+    /* ── TELA 12 – PAGAMENTO APP ── */
+    .payment-opt { background: #0f0f0f; border: 1.5px solid #1a1a1a; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
+    .payment-opt.selected { border-color: #00C853; }
+    .radio-ring { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #444; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s; }
+    .radio-ring.on { border-color: #00C853; }
+    .radio-dot-inner { width: 10px; height: 10px; border-radius: 50%; background: #00C853; }
+    .payment-opt-label { font-size: 14px; color: #ccc; font-weight: 500; }
+
+    /* ── TROCA DE PONTOS (TELA 7) ── */
+    .pts-exchange-card { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .pts-exchange-icon { font-size: 22px; flex-shrink: 0; }
+    .pts-exchange-info { flex: 1; }
+    .pts-exchange-name { font-size: 13px; font-weight: 600; color: #fff; }
+    .pts-exchange-pts { font-size: 11px; color: #00C853; font-weight: 700; margin-top: 2px; }
+    .pts-exchange-btn { background: rgba(0,200,83,0.1); color: #00C853; border: 1px solid rgba(0,200,83,0.3); border-radius: 8px; padding: 6px 12px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .pts-exchange-btn:hover { background: #00C853; color: #000; border-color: #00C853; }
+  </style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar"><span>9:41</span><span>⚡ 100%</span></div>
+
+  <div class="screens">
+
+    <!-- ══ TELA 1 – LOGIN ══ -->
+    <div class="screen active" id="screen-1">
+      <div class="login-body">
+        <div class="logo-box">🍽️</div>
+        <div class="app-name">Sabor Fome</div>
+        <div class="app-sub">Descubra a realidade de cada prato.</div>
+        <div class="divider"></div>
+        <input class="input-field" placeholder="📧  E-mail" />
+        <input class="input-field" placeholder="🔒  Senha" type="password" />
+        <button class="btn-primary" onclick="goTo(2)">Entrar</button>
+        <button class="btn-secondary">Criar conta</button>
+        <span class="tiny">Ao entrar você aceita os <span>Termos de uso</span></span>
+      </div>
+    </div>
+
+    <!-- ══ TELA 2 – LOCALIZAÇÃO ══ -->
+    <div class="screen" id="screen-2">
+      <div class="top-bar">
+        <span class="screen-title">📍 Permitir Localização</span>
+      </div>
+      <div style="margin:0 20px 14px;background:#111;border:1px solid #1e2e1e;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:flex-start;flex-shrink:0;">
+        <span style="font-size:26px;">📍</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;">Sabor Fome quer usar sua localização</div>
+          <div style="font-size:12px;color:#666;line-height:1.6;">Para encontrar restaurantes parceiros perto de você. Seus dados são usados apenas para exibir opções na sua região.</div>
+        </div>
+      </div>
+      <div class="map-area">
+        <div class="map-grid"></div>
+        <div class="map-pin">📍</div>
+      </div>
+      <div style="margin:12px 20px 10px;background:#111;border-radius:14px;padding:14px 16px;border:1px solid #1e1e1e;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🟢</span>
+          <div>
+            <div style="font-size:13px;color:#fff;font-weight:500;">Rua das Flores, 142</div>
+            <div style="font-size:11px;color:#555;">São Paulo, SP · 01234-567</div>
+          </div>
+        </div>
+      </div>
+      <div class="loc-buttons">
+        <button class="btn-primary" onclick="goTo(3)">✅ Permitir localização</button>
+        <button class="btn-secondary" onclick="goTo(3)">Agora não</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 3 – SELEÇÃO DE OCASIÃO ══ -->
+    <div class="screen" id="screen-3">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(4)">←</div>
+        <span class="screen-title">Qual a ocasião?</span>
+      </div>
+      <div class="occasion-body">
+        <div class="occasion-intro">Selecione o tipo de saída para encontrarmos os restaurantes mais indicados para você.</div>
+
+        <div class="occasion-card" id="occ-casal" onclick="selectOccasion('casal','💑 Casal / Romântico')">
+          <div class="occasion-emoji">💑</div>
+          <div class="occasion-info">
+            <div class="occasion-name">Casal / Romântico</div>
+            <div class="occasion-desc">Ambiente íntimo, iluminação suave, cardápio especial para dois.</div>
+          </div>
+          <div class="occasion-check" id="chk-casal"></div>
+        </div>
+
+        <div class="occasion-card" id="occ-familia" onclick="selectOccasion('familia','👨‍👩‍👧 Família')">
+          <div class="occasion-emoji">👨‍👩‍👧</div>
+          <div class="occasion-info">
+            <div class="occasion-name">Família</div>
+            <div class="occasion-desc">Espaço kids, brinquedoteca, cardápio infantil e mesas amplas.</div>
+          </div>
+          <div class="occasion-check" id="chk-familia"></div>
+        </div>
+
+        <div class="occasion-card" id="occ-empresa" onclick="selectOccasion('empresa','💼 Empresa / Negócios')">
+          <div class="occasion-emoji">💼</div>
+          <div class="occasion-info">
+            <div class="occasion-name">Empresa / Negócios</div>
+            <div class="occasion-desc">Ambiente discreto, Wi-Fi, espaço para reuniões e almoço corporativo.</div>
+          </div>
+          <div class="occasion-check" id="chk-empresa"></div>
+        </div>
+
+        <div class="occasion-card" id="occ-privativo" onclick="selectOccasion('privativo','🕵️ Privativo / Solo')">
+          <div class="occasion-emoji">🕵️</div>
+          <div class="occasion-info">
+            <div class="occasion-name">Privativo / Solo</div>
+            <div class="occasion-desc">Tranquilo, sem barulho, ideal para trabalhar ou comer em paz.</div>
+          </div>
+          <div class="occasion-check" id="chk-privativo"></div>
+        </div>
+
+        <button class="btn-primary" id="btn-ocasiao" onclick="goTo(4)" style="opacity:0.4;pointer-events:none;">Ver restaurantes →</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 4 – HOME ══ -->
+    <div class="screen" id="screen-4">
+      <div class="home-header">
+        <div class="home-greeting">Olá, bom apetite! 👋</div>
+        <div class="home-name">Sabor Fome</div>
+        <div class="occasion-badge" onclick="goTo(3)" id="ocasiao-badge">🎯 Selecionar ocasião</div>
+      </div>
+      <div class="search-bar">🔍 &nbsp;Buscar pratos ou restaurantes...</div>
+      <div class="categories-scroll">
+        <div class="cat-item"><div class="cat-circle active">🍔</div><span class="cat-label">Lanches</span></div>
+        <div class="cat-item"><div class="cat-circle">🍕</div><span class="cat-label">Pizza</span></div>
+        <div class="cat-item"><div class="cat-circle">🍣</div><span class="cat-label">Sushi</span></div>
+        <div class="cat-item"><div class="cat-circle">🥩</div><span class="cat-label">Carnes</span></div>
+        <div class="cat-item"><div class="cat-circle">🥗</div><span class="cat-label">Saladas</span></div>
+        <div class="cat-item"><div class="cat-circle">🍦</div><span class="cat-label">Sobremesa</span></div>
+      </div>
+      <div class="promo-banner">
+        <div>
+          <div class="promo-tag">🔥 DESTAQUE DA SEMANA</div>
+          <div class="promo-title">Descubra a realidade<br>de cada prato</div>
+          <div class="promo-sub">Vídeos reais · Sem surpresas</div>
+        </div>
+        <div class="promo-emoji">🎥</div>
+      </div>
+      <div class="section-title">Indicados para você</div>
+      <div class="promo-list">
+        <div class="promo-item" onclick="goTo(7)" style="cursor:pointer;">
+          <div class="promo-item-emoji">🍔</div>
+          <div class="promo-item-info">
+            <div class="promo-item-name">McDonald's</div>
+            <div class="promo-item-desc">Fast food · ★ 4.2 · 1,2 km</div>
+          </div>
+          <div class="promo-item-price">Score 94</div>
+        </div>
+        <div class="promo-item" onclick="goTo(7)" style="cursor:pointer;">
+          <div class="promo-item-emoji">🔥</div>
+          <div class="promo-item-info">
+            <div class="promo-item-name">Burger King</div>
+            <div class="promo-item-desc">Fast food · ★ 4.0 · 2,1 km</div>
+          </div>
+          <div class="promo-item-price">Score 87</div>
+        </div>
+        <div class="promo-item" onclick="goTo(7)" style="cursor:pointer;">
+          <div class="promo-item-emoji">🦒</div>
+          <div class="promo-item-info">
+            <div class="promo-item-name">Giraffas</div>
+            <div class="promo-item-desc">Brasileira · ★ 4.6 · 0,8 km</div>
+          </div>
+          <div class="promo-item-price">Score 98</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TELA 5 – RESTAURANTES ══ -->
+    <div class="screen" id="screen-5">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(4)">←</div>
+        <span class="screen-title">Restaurantes</span>
+        <div class="back-btn" onclick="goTo(6)" style="margin-left:auto;font-size:18px;background:rgba(0,200,83,0.08);border-color:rgba(0,200,83,0.25);" title="Filtros avançados">🎛️</div>
+      </div>
+      <div class="search-bar" style="margin:0 20px 10px;">🔍 &nbsp;Buscar restaurante...</div>
+      <div style="display:flex;gap:8px;margin:0 20px 14px;flex-shrink:0;">
+        <div style="flex:1;background:rgba(0,200,83,0.08);border:1.5px solid #00C853;border-radius:20px;padding:8px 14px;font-size:13px;color:#00C853;font-weight:700;text-align:center;cursor:pointer;">🍽️ Por Restaurante</div>
+        <div style="flex:1;background:#111;border:1.5px solid #222;border-radius:20px;padding:8px 14px;font-size:13px;color:#666;font-weight:600;text-align:center;cursor:pointer;" onclick="goTo(11)">🥩 Por Prato</div>
+      </div>
+      <div class="rest-list">
+
+        <div class="rest-card" onclick="goTo(7)" style="cursor:pointer;">
+          <div class="rest-cover rest-cover-mc">🍔<span class="rest-cover-badge">⭐ 4.2 · Score 94</span></div>
+          <div class="rest-body">
+            <div class="rest-logo-small" style="background:#DA291C;color:#FFC72C;">M</div>
+            <div class="rest-info-col">
+              <div class="rest-name">McDonald's</div>
+              <div class="rest-stars">★★★★☆</div>
+              <div class="rest-meta">Fast food · 1,2 km · Aberto agora</div>
+              <div class="rest-badges">
+                <span class="badge badge-green">♿ PCD</span>
+                <span class="badge badge-green">🐾 PETS</span>
+                <span class="badge">Wi-Fi</span>
+              </div>
+            </div>
+            <button class="btn-sm">Ver</button>
+          </div>
+        </div>
+
+        <div class="rest-card" onclick="goTo(7)" style="cursor:pointer;">
+          <div class="rest-cover rest-cover-bk">🔥<span class="rest-cover-badge">⭐ 4.0 · Score 87</span></div>
+          <div class="rest-body">
+            <div class="rest-logo-small" style="background:#502314;color:#F5821F;font-size:13px;">BK</div>
+            <div class="rest-info-col">
+              <div class="rest-name">Burger King</div>
+              <div class="rest-stars">★★★★☆</div>
+              <div class="rest-meta">Fast food · 2,1 km · Aberto agora</div>
+              <div class="rest-badges">
+                <span class="badge badge-green">♿ PCD</span>
+                <span class="badge badge-green">👶 KIDS</span>
+              </div>
+            </div>
+            <button class="btn-sm">Ver</button>
+          </div>
+        </div>
+
+        <div class="rest-card" onclick="goTo(7)" style="cursor:pointer;">
+          <div class="rest-cover rest-cover-gf">🦒<span class="rest-cover-badge">⭐ 4.6 · Score 98</span></div>
+          <div class="rest-body">
+            <div class="rest-logo-small" style="background:#F04E23;color:#fff;font-size:13px;">GF</div>
+            <div class="rest-info-col">
+              <div class="rest-name">Giraffas</div>
+              <div class="rest-stars">★★★★★</div>
+              <div class="rest-meta">Brasileira · 0,8 km · Aberto agora</div>
+              <div class="rest-badges">
+                <span class="badge badge-green">♿ PCD</span>
+                <span class="badge badge-green">🐾 PETS</span>
+                <span class="badge badge-green">👶 KIDS</span>
+                <span class="badge badge-green">🧸 Brinquedoteca</span>
+              </div>
+            </div>
+            <button class="btn-sm">Ver</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ TELA 6 – FILTROS AVANÇADOS ══ -->
+    <div class="screen" id="screen-6">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(4)">←</div>
+        <span class="screen-title">Filtros</span>
+        <span style="margin-left:auto;font-size:12px;color:#00C853;cursor:pointer;font-weight:600;">Limpar</span>
+      </div>
+      <div class="filter-body">
+
+        <div>
+          <div class="filter-section-title">Acessibilidade</div>
+          <div style="height:12px;"></div>
+          <div class="access-grid">
+            <div class="access-card active" onclick="this.classList.toggle('active')">
+              <div class="access-icon">♿</div>
+              <div>
+                <div class="access-label">PCD</div>
+                <div class="access-sub">Rampas e banheiros</div>
+              </div>
+            </div>
+            <div class="access-card" onclick="this.classList.toggle('active')">
+              <div class="access-icon">🐾</div>
+              <div>
+                <div class="access-label">PETS</div>
+                <div class="access-sub">Aceita animais</div>
+              </div>
+            </div>
+            <div class="access-card" onclick="this.classList.toggle('active')">
+              <div class="access-icon">👶</div>
+              <div>
+                <div class="access-label">KIDS</div>
+                <div class="access-sub">Cadeirão infantil</div>
+              </div>
+            </div>
+            <div class="access-card" onclick="this.classList.toggle('active')">
+              <div class="access-icon">🧸</div>
+              <div>
+                <div class="access-label">Brinquedoteca</div>
+                <div class="access-sub">Espaço para crianças</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="filter-section-title">Ocasião</div>
+          <div style="height:12px;"></div>
+          <div class="filter-chips">
+            <div class="filter-chip active" onclick="this.classList.toggle('active')">💑 Casal</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">👨‍👩‍👧 Família</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">💼 Empresa</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">🕵️ Privativo</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="filter-section-title">Tipo de culinária</div>
+          <div style="height:12px;"></div>
+          <div class="filter-chips">
+            <div class="filter-chip active" onclick="this.classList.toggle('active')">🍔 Lanches</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">🍕 Pizza</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">🍣 Japonesa</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">🥩 Carnes</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">🇧🇷 Brasileira</div>
+            <div class="filter-chip" onclick="this.classList.toggle('active')">🥗 Saudável</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="filter-section-title">Faixa de preço</div>
+          <div style="height:12px;"></div>
+          <div class="price-row">
+            <div class="price-btn active" onclick="setPriceFilter(this)">$<br><span style="font-size:10px;font-weight:400;">Econômico</span></div>
+            <div class="price-btn" onclick="setPriceFilter(this)">$$<br><span style="font-size:10px;font-weight:400;">Moderado</span></div>
+            <div class="price-btn" onclick="setPriceFilter(this)">$$$<br><span style="font-size:10px;font-weight:400;">Premium</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="filter-section-title">Distância máxima</div>
+          <div style="height:12px;"></div>
+          <div class="dist-row">
+            <input type="range" min="1" max="20" value="5" class="dist-slider" oninput="document.getElementById('dist-val').textContent=this.value+'km'">
+            <span class="dist-val" id="dist-val">5km</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="goTo(5)">🔍 Exibir resultados</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 7 – PERFIL RESTAURANTE ══ -->
+    <div class="screen" id="screen-7">
+      <div class="rest-header">
+        <div class="back-btn" onclick="goTo(5)" style="margin-bottom:10px;">←</div>
+        <div class="rest-header-logo">🍽️</div>
+        <div class="rest-header-name">Restaurante Sabor</div>
+        <div class="rest-header-stars">★★★★★ <span style="color:#888;font-size:12px;">4.8 · 230 avaliações</span></div>
+        <div class="rest-header-meta">Aberto agora · 11h–23h · 0,8 km</div>
+        <div class="rest-header-badges">
+          <span class="badge badge-green">♿ PCD</span>
+          <span class="badge badge-green">🐾 PETS</span>
+          <span class="badge badge-green">👶 KIDS</span>
+          <span class="badge badge-green">🧸 Brinquedoteca</span>
+          <span class="badge">Wi-Fi</span>
+          <span class="badge">Estacionamento</span>
+        </div>
+      </div>
+
+      <div class="video-player" onclick="alert('▶ Reproduzindo vídeo do ambiente...')">
+        <div class="video-tag">▶ VÍDEO REAL</div>
+        <div class="video-pov">POV</div>
+        <div class="video-play-btn">▶</div>
+        <div class="video-label">Ver vídeo do ambiente e dos pratos</div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-item">
+          <span class="info-icon">📍</span>
+          <div>
+            <div class="info-text">Av. Paulista, 1500 · São Paulo</div>
+            <div class="info-sub">0,8 km de distância</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🕐</span>
+          <div>
+            <div class="info-text">Seg–Sex: 11h–23h · Sáb–Dom: 11h–00h</div>
+            <div class="info-sub" style="color:#00C853;">Aberto agora</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">💰</span>
+          <div>
+            <div class="info-text">Preço médio: R$ 45 por pessoa</div>
+            <div class="info-sub">Faixa: $$ Moderado</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <div class="action-btn" onclick="alert('Abrindo Google Maps...')">
+          <div class="action-btn-icon">📍</div>
+          <div class="action-btn-label">Como chegar</div>
+        </div>
+        <div class="action-btn" onclick="alert('Ligando para o restaurante...')">
+          <div class="action-btn-icon">📞</div>
+          <div class="action-btn-label">Ligar</div>
+        </div>
+        <div class="action-btn" onclick="goTo(8)">
+          <div class="action-btn-icon">✅</div>
+          <div class="action-btn-label">Confirmar visita</div>
+        </div>
+      </div>
+
+      <div class="cat-tabs">
+        <div class="cat-tab active">Todos</div>
+        <div class="cat-tab">Carnes</div>
+        <div class="cat-tab">Massas</div>
+        <div class="cat-tab">Saladas</div>
+        <div class="cat-tab">Bebidas</div>
+      </div>
+      <div class="menu-grid">
+        <div class="menu-card" onclick="goTo(11)" style="cursor:pointer;">
+          <div class="menu-card-img">🥩</div>
+          <div class="menu-card-body">
+            <div class="menu-card-name">Bife à Parmegiana</div>
+            <div class="menu-card-price">R$ 39,90</div>
+            <button class="menu-card-btn">Ver prato</button>
+          </div>
+        </div>
+        <div class="menu-card" onclick="goTo(11)" style="cursor:pointer;">
+          <div class="menu-card-img">🍗</div>
+          <div class="menu-card-body">
+            <div class="menu-card-name">Frango Grelhado</div>
+            <div class="menu-card-price">R$ 32,90</div>
+            <button class="menu-card-btn">Ver prato</button>
+          </div>
+        </div>
+        <div class="menu-card" onclick="goTo(11)" style="cursor:pointer;">
+          <div class="menu-card-img">🍝</div>
+          <div class="menu-card-body">
+            <div class="menu-card-name">Massa ao Molho</div>
+            <div class="menu-card-price">R$ 28,90</div>
+            <button class="menu-card-btn">Ver prato</button>
+          </div>
+        </div>
+        <div class="menu-card" onclick="goTo(11)" style="cursor:pointer;">
+          <div class="menu-card-img">🥗</div>
+          <div class="menu-card-body">
+            <div class="menu-card-name">Salada Caesar</div>
+            <div class="menu-card-price">R$ 22,90</div>
+            <button class="menu-card-btn">Ver prato</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:4px 20px 20px;flex-shrink:0;">
+        <div class="section-title" style="padding:12px 0 10px;">🎁 Troque seus pontos</div>
+        <div class="pts-exchange-card">
+          <div class="pts-exchange-icon">🍮</div>
+          <div class="pts-exchange-info">
+            <div class="pts-exchange-name">Sobremesa grátis</div>
+            <div class="pts-exchange-pts">150 pontos</div>
+          </div>
+          <button class="pts-exchange-btn" onclick="alert('Resgate solicitado! Mostre ao atendente.')">Resgatar</button>
+        </div>
+        <div class="pts-exchange-card">
+          <div class="pts-exchange-icon">🥗</div>
+          <div class="pts-exchange-info">
+            <div class="pts-exchange-name">Entrada grátis</div>
+            <div class="pts-exchange-pts">300 pontos</div>
+          </div>
+          <button class="pts-exchange-btn" onclick="alert('Resgate solicitado! Mostre ao atendente.')">Resgatar</button>
+        </div>
+        <div class="pts-exchange-card">
+          <div class="pts-exchange-icon">🏷️</div>
+          <div class="pts-exchange-info">
+            <div class="pts-exchange-name">20% desconto na conta</div>
+            <div class="pts-exchange-pts">500 pontos</div>
+          </div>
+          <button class="pts-exchange-btn" onclick="alert('Resgate solicitado! Mostre ao atendente.')">Resgatar</button>
+        </div>
+        <div style="font-size:11px;color:#444;text-align:center;padding-top:4px;">Seus pontos: <span style="color:#00C853;font-weight:700;">650 pts</span></div>
+      </div>
+    </div>
+
+    <!-- ══ TELA 8 – CONFIRMAR VISITA ══ -->
+    <div class="screen" id="screen-8">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(7)">←</div>
+        <span class="screen-title">Confirmar Visita</span>
+      </div>
+      <div class="visit-body">
+        <div class="visit-rest-card">
+          <div class="visit-rest-logo">🍽️</div>
+          <div>
+            <div class="visit-rest-name">Restaurante Sabor</div>
+            <div class="visit-rest-meta">Av. Paulista, 1500 · 0,8 km</div>
+            <div class="visit-rest-occasion" id="visit-occasion">🎯 Ocasião não selecionada</div>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <div class="visit-field-label">Data da visita</div>
+          <div class="visit-field-value">📅 &nbsp;Hoje, 20 de maio de 2026</div>
+        </div>
+
+        <div class="visit-field">
+          <div class="visit-field-label">Horário pretendido</div>
+          <div class="visit-field-value">🕐 &nbsp;19:30 – 21:00</div>
+        </div>
+
+        <div class="visit-field">
+          <div class="visit-field-label">Número de pessoas</div>
+          <div class="people-row">
+            <div class="people-btn" onclick="changePeople(-1)">−</div>
+            <div class="people-count" id="people-count">2</div>
+            <div class="people-btn" onclick="changePeople(1)">+</div>
+            <span style="font-size:13px;color:#555;margin-left:4px;">pessoas</span>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <div class="visit-field-label">Acessibilidade confirmada</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+            <span class="badge badge-green">♿ PCD</span>
+            <span class="badge badge-green">🐾 PETS</span>
+            <span class="badge badge-green">👶 KIDS</span>
+          </div>
+        </div>
+
+        <div class="visit-field">
+          <div class="visit-field-label">Fazer reserva?</div>
+          <div class="reserve-toggle-row">
+            <div class="reserve-btn active" id="btn-reserva-nao" onclick="toggleReservation(false)">✗ Não</div>
+            <div class="reserve-btn" id="btn-reserva-sim" onclick="toggleReservation(true)">✓ Sim, quero reservar</div>
+          </div>
+        </div>
+
+        <div id="qr-section" style="display:none;">
+          <div style="background:#0f0f0f;border:1.5px solid #00C853;border-radius:14px;padding:16px;text-align:center;">
+            <div style="font-size:12px;color:#00C853;font-weight:700;margin-bottom:12px;">🎟️ QR Code de Reserva</div>
+            <div style="display:inline-block;background:#fff;padding:10px;border-radius:10px;">
+              <svg width="90" height="90" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0" y="0" width="30" height="30" fill="black"/><rect x="3" y="3" width="24" height="24" fill="white"/><rect x="7" y="7" width="16" height="16" fill="black"/>
+                <rect x="60" y="0" width="30" height="30" fill="black"/><rect x="63" y="3" width="24" height="24" fill="white"/><rect x="67" y="7" width="16" height="16" fill="black"/>
+                <rect x="0" y="60" width="30" height="30" fill="black"/><rect x="3" y="63" width="24" height="24" fill="white"/><rect x="7" y="67" width="16" height="16" fill="black"/>
+                <rect x="33" y="3" width="6" height="6" fill="black"/><rect x="42" y="0" width="6" height="6" fill="black"/><rect x="51" y="6" width="6" height="6" fill="black"/>
+                <rect x="33" y="12" width="6" height="6" fill="black"/><rect x="45" y="15" width="6" height="6" fill="black"/><rect x="39" y="21" width="6" height="6" fill="black"/>
+                <rect x="3" y="33" width="6" height="6" fill="black"/><rect x="15" y="36" width="6" height="6" fill="black"/><rect x="24" y="33" width="6" height="6" fill="black"/>
+                <rect x="33" y="33" width="6" height="6" fill="black"/><rect x="45" y="36" width="6" height="6" fill="black"/><rect x="54" y="33" width="6" height="6" fill="black"/>
+                <rect x="63" y="36" width="6" height="6" fill="black"/><rect x="75" y="33" width="6" height="6" fill="black"/><rect x="84" y="36" width="6" height="6" fill="black"/>
+                <rect x="3" y="45" width="6" height="6" fill="black"/><rect x="18" y="42" width="6" height="6" fill="black"/><rect x="30" y="45" width="6" height="6" fill="black"/>
+                <rect x="42" y="42" width="6" height="6" fill="black"/><rect x="57" y="45" width="6" height="6" fill="black"/><rect x="69" y="42" width="6" height="6" fill="black"/>
+                <rect x="81" y="45" width="6" height="6" fill="black"/><rect x="6" y="54" width="6" height="6" fill="black"/><rect x="21" y="51" width="6" height="6" fill="black"/>
+                <rect x="36" y="54" width="6" height="6" fill="black"/><rect x="48" y="51" width="6" height="6" fill="black"/><rect x="60" y="54" width="6" height="6" fill="black"/>
+                <rect x="72" y="51" width="6" height="6" fill="black"/><rect x="84" y="54" width="6" height="6" fill="black"/>
+                <rect x="33" y="63" width="6" height="6" fill="black"/><rect x="48" y="60" width="6" height="6" fill="black"/><rect x="60" y="63" width="6" height="6" fill="black"/>
+                <rect x="75" y="60" width="6" height="6" fill="black"/><rect x="84" y="63" width="6" height="6" fill="black"/>
+                <rect x="36" y="72" width="6" height="6" fill="black"/><rect x="51" y="69" width="6" height="6" fill="black"/><rect x="66" y="72" width="6" height="6" fill="black"/>
+                <rect x="78" y="69" width="6" height="6" fill="black"/><rect x="33" y="81" width="6" height="6" fill="black"/><rect x="45" y="78" width="6" height="6" fill="black"/>
+                <rect x="57" y="81" width="6" height="6" fill="black"/><rect x="69" y="78" width="6" height="6" fill="black"/><rect x="81" y="81" width="6" height="6" fill="black"/>
+              </svg>
+            </div>
+            <div style="font-size:11px;color:#888;margin-top:10px;line-height:1.5;">Mostre ao chegar para fazer check-in<br><strong style="color:#00C853;">+50 pts de bônus no check-in!</strong></div>
+            <div style="font-size:10px;color:#444;margin-top:4px;">Reserva confirmada: Hoje · 19:30 · <span id="qr-people">2</span> pessoas</div>
+          </div>
+        </div>
+
+        <div class="visit-note">Ao confirmar, você será direcionado ao restaurante. O Sabor Fome não realiza delivery — leva você até a melhor experiência presencial. 🍽️</div>
+
+        <button class="btn-primary" onclick="goTo(9)">✅ Confirmar visita · +50 pts</button>
+        <button class="btn-secondary" onclick="goTo(7)">Voltar</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 9 – FORMA DE PAGAMENTO ══ -->
+    <div class="screen" id="screen-9">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(8)">←</div>
+        <span class="screen-title">Forma de Pagamento</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;padding:0 20px 24px;gap:14px;overflow-y:auto;">
+        <div style="font-size:13px;color:#666;line-height:1.6;padding-top:4px;">Como você prefere pagar pela sua experiência no restaurante?</div>
+
+        <div class="pay-choice-card selected" id="pay-app" onclick="selectPayChoice('app')">
+          <div class="pay-choice-icon">💳</div>
+          <div style="flex:1;">
+            <div class="pay-choice-title">Pagar pelo App</div>
+            <div class="pay-choice-desc">Cartão de crédito, débito ou PIX diretamente no Sabor Fome</div>
+          </div>
+          <div class="occasion-check on" id="pay-check-app">✓</div>
+        </div>
+
+        <div class="pay-choice-card" id="pay-rest" onclick="selectPayChoice('rest')">
+          <div class="pay-choice-icon">🍽️</div>
+          <div style="flex:1;">
+            <div class="pay-choice-title">Pagar no Restaurante</div>
+            <div class="pay-choice-desc">Combine diretamente com o restaurante na sua chegada</div>
+          </div>
+          <div class="occasion-check" id="pay-check-rest"></div>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid #1a1a1a;border-radius:14px;padding:14px;">
+          <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:10px;">Resumo da visita</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:#666;">Restaurante</span>
+            <span style="font-size:12px;color:#fff;">Restaurante Sabor</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:#666;">Ocasião</span>
+            <span style="font-size:12px;color:#00C853;" id="pay-occasion">–</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:#666;">Data</span>
+            <span style="font-size:12px;color:#fff;">Hoje · 19:30</span>
+          </div>
+          <div style="height:1px;background:#222;margin:8px 0;"></div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:#666;">Preço médio por pessoa</span>
+            <span style="font-size:14px;font-weight:800;color:#00C853;">~R$ 45,00</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="confirmPayment()">Continuar →</button>
+        <button class="btn-secondary" onclick="goTo(8)">Voltar</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 10 – AVALIAÇÃO ══ -->
+    <div class="screen" id="screen-10">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(13)">←</div>
+        <span class="screen-title">Sua Avaliação</span>
+      </div>
+      <div class="review-body">
+        <div class="success-circle">✓</div>
+        <div class="review-title">Agradecemos sua Avaliação!</div>
+        <div class="review-sub">Sua opinião ajuda outros usuários a escolherem com confiança</div>
+
+        <div class="stars-row" id="stars">
+          <span class="star lit" onclick="rateStar(1)">★</span>
+          <span class="star lit" onclick="rateStar(2)">★</span>
+          <span class="star lit" onclick="rateStar(3)">★</span>
+          <span class="star" onclick="rateStar(4)">★</span>
+          <span class="star" onclick="rateStar(5)">★</span>
+        </div>
+
+        <textarea class="comment-box" placeholder="Deixe seu comentário sobre o ambiente, atendimento e pratos..."></textarea>
+
+        <button class="photo-btn">🎥 &nbsp;Envie uma foto ou vídeo do prato</button>
+        <div style="font-size:11px;color:#444;text-align:center;">Vídeos reais ajudam outros clientes a decidir com confiança</div>
+
+        <div class="review-points">🏆 &nbsp;+30 pontos ao enviar foto ou vídeo!</div>
+
+        <button class="btn-primary" onclick="goTo(4)">✅ Enviar avaliação · +20 pts</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 11 – LISTA DE PRATOS ══ -->
+    <div class="screen" id="screen-11">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(7)">←</div>
+        <span class="screen-title">Pratos Disponíveis</span>
+      </div>
+      <div class="dish-list">
+        <div class="dish-item">
+          <div class="dish-thumb">🥩</div>
+          <div class="dish-content">
+            <div class="dish-name">Bife à Parmegiana</div>
+            <div class="dish-price">R$ 39,90</div>
+            <div class="dish-desc">300g | Bife bovino empanado, molho de tomate caseiro, queijo mussarela derretido. Acompanha arroz, feijão e fritas.</div>
+            <div class="dish-tags">
+              <span class="tag-green">Popular</span>
+              <span style="background:rgba(255,200,0,0.1);color:#ffd700;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;">🎥 Tem vídeo</span>
+            </div>
+          </div>
+          <button class="dish-add" onclick="goTo(8)">+</button>
+        </div>
+        <div class="dish-item">
+          <div class="dish-thumb">🍗</div>
+          <div class="dish-content">
+            <div class="dish-name">Parmegiana de Frango</div>
+            <div class="dish-price">R$ 34,90</div>
+            <div class="dish-desc">280g | Frango empanado crocante, molho de tomate, queijo derretido gratinado. Acompanha arroz e salada fresca.</div>
+            <div class="dish-tags"><span class="tag-green">Mais pedido</span></div>
+          </div>
+          <button class="dish-add" onclick="goTo(8)">+</button>
+        </div>
+        <div class="dish-item">
+          <div class="dish-thumb">🍆</div>
+          <div class="dish-content">
+            <div class="dish-name">Parmegiana de Berinjela</div>
+            <div class="dish-price">R$ 29,90</div>
+            <div class="dish-desc">250g | Berinjela empanada, molho de tomate artesanal, queijo coalho. Opção vegetariana. Acompanha arroz integral e salada.</div>
+            <div class="dish-tags"><span class="tag-green">Vegetariano</span></div>
+          </div>
+          <button class="dish-add" onclick="goTo(8)">+</button>
+        </div>
+        <div class="dish-item">
+          <div class="dish-thumb">🧀</div>
+          <div class="dish-content">
+            <div class="dish-name">Parmegiana Dupla</div>
+            <div class="dish-price">R$ 52,90</div>
+            <div class="dish-desc">500g | Bife + frango empanados, dupla camada de molho e queijo. Para dois! Acompanha 2 porções de arroz e fritas.</div>
+            <div class="dish-tags">
+              <span class="tag-green">Para 2</span>
+              <span style="background:rgba(255,200,0,0.1);color:#ffd700;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;">🎥 Tem vídeo</span>
+            </div>
+          </div>
+          <button class="dish-add" onclick="goTo(8)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TELA 12 – PAGAMENTO PELO APP ══ -->
+    <div class="screen" id="screen-12">
+      <div class="top-bar">
+        <div class="back-btn" onclick="goTo(9)">←</div>
+        <span class="screen-title">Pagamento</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;padding:0 20px 24px;gap:10px;overflow-y:auto;">
+
+        <div class="payment-opt selected" id="payopt-card" onclick="selectPayment('card')">
+          <div class="radio-ring on"><div class="radio-dot-inner"></div></div>
+          <span class="payment-opt-label">💳 &nbsp;Cartão de Débito ou Crédito</span>
+        </div>
+
+        <div id="card-fields" style="background:#0f0f0f;border:1.5px solid #1a1a1a;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+          <input class="input-field" placeholder="Número do cartão" style="font-size:13px;padding:11px 14px;">
+          <div style="display:flex;gap:10px;">
+            <input class="input-field" placeholder="MM/AA" style="font-size:13px;padding:11px 14px;flex:1;">
+            <input class="input-field" placeholder="CVV" style="font-size:13px;padding:11px 14px;flex:1;">
+          </div>
+          <input class="input-field" placeholder="Nome no cartão" style="font-size:13px;padding:11px 14px;">
+        </div>
+
+        <div class="payment-opt" id="payopt-pix" onclick="selectPayment('pix')">
+          <div class="radio-ring"></div>
+          <span class="payment-opt-label">📱 &nbsp;PIX</span>
+        </div>
+
+        <div class="payment-opt" id="payopt-caixa" onclick="selectPayment('caixa')">
+          <div class="radio-ring"></div>
+          <span class="payment-opt-label">🏪 &nbsp;Pagar no Caixa</span>
+        </div>
+
+        <div style="background:#0f0f0f;border:1px solid #1a1a1a;border-radius:14px;padding:14px;margin-top:4px;">
+          <div style="font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:10px;">Resumo</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:#666;">Restaurante Sabor</span>
+            <span style="font-size:12px;color:#fff;">Visita confirmada</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:12px;color:#666;">Taxa do app</span>
+            <span style="font-size:12px;color:#fff;">R$ 0,00</span>
+          </div>
+          <div style="height:1px;background:#222;margin:8px 0;"></div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:12px;color:#666;">Preço médio estimado</span>
+            <span style="font-size:16px;font-weight:800;color:#00C853;">~R$ 45,00</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top:4px;" onclick="goTo(13)">✅ Confirmar Pagamento · +50 pts</button>
+        <button class="btn-secondary" onclick="goTo(9)">Voltar</button>
+      </div>
+    </div>
+
+    <!-- ══ TELA 13 – PONTOS / GAMIFICAÇÃO ══ -->
+    <div class="screen" id="screen-13">
+      <div class="points-body">
+        <div class="trophy">🏆</div>
+        <div class="points-title">Boa escolha!</div>
+        <div class="points-value">+50</div>
+        <div class="points-label">pontos ganhos</div>
+
+        <div style="width:100%;">
+          <div class="points-bar-wrap">
+            <div class="points-bar-inner"></div>
+          </div>
+          <div class="points-bar-label">
+            <span>Nível: Explorador 🌿</span>
+            <span>650 / 1000 pts</span>
+          </div>
+        </div>
+
+        <div class="points-card">
+          <div class="points-card-icon">🎥</div>
+          <div class="points-card-text">
+            <strong>Ganhe +30 pontos</strong> enviando um vídeo ou foto do seu prato depois da visita!
+          </div>
+        </div>
+
+        <div class="points-card">
+          <div class="points-card-icon">⭐</div>
+          <div class="points-card-text">
+            <strong>Ganhe +20 pontos</strong> avaliando o restaurante após sua experiência.
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="goTo(10)">📝 Avaliar o restaurante</button>
+        <button class="btn-secondary" onclick="goTo(4)">Voltar ao início</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="goTo(4)">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Início</span>
+    </div>
+    <div class="nav-item" id="nav-search" onclick="goTo(5)">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Restaurantes</span>
+    </div>
+    <div class="nav-item" id="nav-occasion" onclick="goTo(3)">
+      <span class="nav-icon">🎯</span>
+      <span class="nav-label">Ocasião</span>
+    </div>
+    <div class="nav-item" id="nav-filter" onclick="goTo(6)">
+      <span class="nav-icon">🎛️</span>
+      <span class="nav-label">Filtros</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let currentScreen = 1;
+  let selectedOccasion = '';
+
+  function goTo(n) {
+    document.getElementById('screen-' + currentScreen).classList.remove('active');
+    document.getElementById('screen-' + n).classList.add('active');
+    document.getElementById('screen-' + n).scrollTop = 0;
+    currentScreen = n;
+
+    ['nav-home','nav-search','nav-occasion','nav-filter'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    if (n === 4) document.getElementById('nav-home').classList.add('active');
+    if (n === 5) document.getElementById('nav-search').classList.add('active');
+    if (n === 3) document.getElementById('nav-occasion').classList.add('active');
+    if (n === 6) document.getElementById('nav-filter').classList.add('active');
+  }
+
+  function selectOccasion(id, label) {
+    // remove all selections
+    ['casal','familia','empresa','privativo'].forEach(o => {
+      document.getElementById('occ-' + o).classList.remove('selected');
+      const chk = document.getElementById('chk-' + o);
+      chk.classList.remove('on');
+      chk.textContent = '';
+    });
+    // select chosen
+    document.getElementById('occ-' + id).classList.add('selected');
+    const chk = document.getElementById('chk-' + id);
+    chk.classList.add('on');
+    chk.textContent = '✓';
+    selectedOccasion = label;
+    // enable button
+    const btn = document.getElementById('btn-ocasiao');
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    // update badge on home
+    document.getElementById('ocasiao-badge').textContent = selectedOccasion;
+    // update visit screen
+    document.getElementById('visit-occasion').textContent = selectedOccasion;
+  }
+
+  function rateStar(n) {
+    document.querySelectorAll('.star').forEach((s, i) => {
+      if (i < n) s.classList.add('lit'); else s.classList.remove('lit');
+    });
+  }
+
+  let people = 2;
+  function changePeople(d) {
+    people = Math.max(1, Math.min(20, people + d));
+    document.getElementById('people-count').textContent = people;
+  }
+
+  function setPriceFilter(el) {
+    document.querySelectorAll('.price-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  let hasReservation = false;
+  function toggleReservation(val) {
+    hasReservation = val;
+    document.getElementById('btn-reserva-sim').classList.toggle('active', val);
+    document.getElementById('btn-reserva-nao').classList.toggle('active', !val);
+    document.getElementById('qr-section').style.display = val ? 'block' : 'none';
+    const qrPeople = document.getElementById('qr-people');
+    if (qrPeople) qrPeople.textContent = people;
+  }
+
+  let payChoice = 'app';
+  function selectPayChoice(type) {
+    payChoice = type;
+    ['app','rest'].forEach(t => {
+      const card = document.getElementById('pay-' + t);
+      const chk = document.getElementById('pay-check-' + t);
+      if (t === type) {
+        card.classList.add('selected');
+        chk.classList.add('on');
+        chk.textContent = '✓';
+      } else {
+        card.classList.remove('selected');
+        chk.classList.remove('on');
+        chk.textContent = '';
+      }
+    });
+    const payOcc = document.getElementById('pay-occasion');
+    if (payOcc && selectedOccasion) payOcc.textContent = selectedOccasion;
+  }
+
+  function confirmPayment() {
+    goTo(payChoice === 'app' ? 12 : 13);
+  }
+
+  let selectedPayMethod = 'card';
+  function selectPayment(type) {
+    selectedPayMethod = type;
+    ['card','pix','caixa'].forEach(t => {
+      const opt = document.getElementById('payopt-' + t);
+      const ring = opt.querySelector('.radio-ring');
+      if (t === type) {
+        opt.classList.add('selected');
+        ring.classList.add('on');
+        ring.innerHTML = '<div class="radio-dot-inner"></div>';
+      } else {
+        opt.classList.remove('selected');
+        ring.classList.remove('on');
+        ring.innerHTML = '';
+      }
+    });
+    const cardFields = document.getElementById('card-fields');
+    if (cardFields) cardFields.style.display = type === 'card' ? 'flex' : 'none';
+  }
+</script>
+</body>
+</html>
