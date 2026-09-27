@@ -11,8 +11,8 @@ Repo da matéria de UX/UI. Aqui tem as anotações de sala sobre personas, entre
 | Arquivo | O que é |
 |---|---|
 | [`sabor-fome/`](sabor-fome) e [`sabor-fome-app.html`](sabor-fome-app.html) | Protótipo do app Sabor Fome |
-| [`anotacoes_de_sala_`](anotacoes_de_sala_) | Anotações de 30/04: personas, entrevista guiada, shadowing, jornada, mapa de empatia |
-| [`aula06.04`](aula06.04) | Link do quadro no Miro da aula de 06/04 |
+| [`anotacoes_de_sala_30_04_2026.txt`](anotacoes_de_sala_30_04_2026.txt) | Anotações de 30/04: personas, entrevista guiada, shadowing, jornada, mapa de empatia |
+| [`aula_06_04_2026_miro.txt`](aula_06_04_2026_miro.txt) | Link do quadro no Miro da aula de 06/04 |
 
 ## 🤝 Recado
 
